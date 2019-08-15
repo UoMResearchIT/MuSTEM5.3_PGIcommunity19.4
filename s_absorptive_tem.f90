@@ -78,7 +78,7 @@ subroutine absorptive_tem
     real(fp_kind),dimension(nopiy,nopix) :: cbed,image,tem_image,temp_image
     
     !diagnostic variables
-    real(fp_kind) :: intensity, t1, delta
+    real(fp_kind) :: intensity, t1, t2, delta
     
     !output variables
     character(120) :: filename,fnam_df
@@ -122,7 +122,9 @@ subroutine absorptive_tem
     call load_save_add_grates(projected_potential,nopiy,nopix,n_slices)
     
 
-	t1 = secnds(0.0)
+	!t1 = secnds(0.0)
+	call cpu_time(t1)
+	
 #ifdef GPU
 	! Plan the fourier transforms
     if (fp_kind.eq.8)then
@@ -267,7 +269,9 @@ subroutine absorptive_tem
     enddo ! End loop over tilts
     
     
-	delta = secnds(t1)
+	!delta = secnds(t1)
+    call cpu_time(t2)
+    delta = t2 - t1
     
     write(*,*) 
     write(*,*) 
@@ -277,7 +281,7 @@ subroutine absorptive_tem
     write(*,*)  
     
 	if(timing) then
-		open(unit=9834, file=trim(adjustl(output_prefix))//'_timing.txt', access='append')
+		open(unit=9834, file=trim(adjustl(output_prefix))//'_timing.txt', access='sequential', position='append')
 		write(9834, '(a, g, a, /)') 'The multislice calculation took ', delta, 'seconds.'
 		close(9834)
 	endif

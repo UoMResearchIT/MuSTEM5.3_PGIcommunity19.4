@@ -95,7 +95,7 @@ subroutine qep_tem
 	integer :: lengthdf
     
     !diagnostic variables
-    real(fp_kind) :: intensity, t1, delta
+    real(fp_kind) :: intensity, t1, t2, delta
 #ifdef GPU    
     !device variables
 	integer :: plan
@@ -186,7 +186,8 @@ subroutine qep_tem
     
     if (any([on_the_fly,quick_shift,phase_ramp_shift])) allocate(trans_d(nopiy,nopix))
 #endif    
-	t1 = secnds(0.0)
+	!t1 = secnds(0.0)
+	call cpu_time(t1)
 
 	if (pw_illum) then
 	      psi_initial = 1.0_fp_kind / sqrt(float(npixels))
@@ -367,7 +368,9 @@ psi_initial_d = psi_initial
     total_intensity = total_intensity_d
 	if(pw_illum) tem_image = tem_image_d
 #endif    
-    delta = secnds(t1)
+    !delta = secnds(t1)
+    call cpu_time(t2)
+    delta = t2 - t1
     
     write(*,*)
     write(*,*)
@@ -377,7 +380,7 @@ psi_initial_d = psi_initial
     write(*,*)  
     
 	if(timing) then
-		open(unit=9834, file=trim(adjustl(output_prefix))//'_timing.txt', access='append')
+		open(unit=9834, file=trim(adjustl(output_prefix))//'_timing.txt', access='sequential', position='append')
 		write(9834, '(a, g, a, /)') 'The multislice calculation took ', delta, 'seconds.'
 		close(9834)
 	endif

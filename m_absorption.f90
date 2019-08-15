@@ -158,7 +158,7 @@ module m_absorption
         real(8),parameter :: pi = 4.0d0*atan(1.0d0)
         real(8) :: sum1
 		!real(8) :: sum2,sum3,diff,mu(1000)
-		real(fp_kind) :: t1, delta
+		real(fp_kind) :: t1, t2, delta
     
 
         ! Make sure orthogonal coordinate system has been previously set up
@@ -194,7 +194,8 @@ module m_absorption
 
         ! Accumulator for mu_0
         mu_0 = 0.0_fp_kind
-		t1 = secnds(0.0)
+		!t1 = secnds(0.0)
+		call cpu_time(t1)
         ! Loop over reciprocal lattice vectors g
         do ipa = 1, max_int
 
@@ -247,8 +248,10 @@ module m_absorption
         !stop
 		
 		if(timing) then
-			delta = secnds(t1)
-			open(unit=9834, file=trim(adjustl(output_prefix))//'_timing.txt', access='append')
+			!delta = secnds(t1)
+			call cpu_time(t2)
+			delta = t2 - t1
+			open(unit=9834, file=trim(adjustl(output_prefix))//'_timing.txt', access='sequential', position='append')
 			write(9834, '(a, g, a, /)') 'Calculation of absorptive form factors took ', delta, 'seconds.'
 			close(9834)
 		endif

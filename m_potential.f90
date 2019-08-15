@@ -797,11 +797,12 @@ module m_potential
         complex(fp_kind),dimension(nopiy,nopix) :: scattering_pot,temp,effective_scat_fact
         complex(fp_kind)::fz_abs(nopiy,nopix,nt)
     
-        real(fp_kind) :: t1, delta,amplitude(nopiy,nopix),phase(nopiy,nopix)
+        real(fp_kind) :: t1, t2, delta, amplitude(nopiy,nopix),phase(nopiy,nopix)
     
         procedure(make_site_factor_generic),pointer :: make_site_factor
         projected_potential= 0 
-        t1 = secnds(0.0_fp_kind)
+        !t1 = secnds(0.0_fp_kind)
+        call cpu_time(t1)
         fz_abs=0
         if(include_absorption) fz_abs = absorptive_scattering_factors(ig1,ig2,ifactory,ifactorx,nopiy,nopix,nt,a0,ss,atf,nat, ak, relm, orthog, 0.0_8, 4.0d0*atan(1.0d0))*2*ak
             
@@ -821,12 +822,14 @@ module m_potential
                 
 	    enddo ! End loop over slices
 	
-	    delta = secnds(t1)
+	    !delta = secnds(t1)
+        call cpu_time(t2)
+        delta = t2 - t1
         
 		if(timing) then
             write(*,*) 'The calculation of transmission functions for the absorptive model took ', delta, 'seconds.'
             write(*,*)
-			open(unit=9834, file=trim(adjustl(output_prefix))//'_timing.txt', access='append')
+			open(unit=9834, file=trim(adjustl(output_prefix))//'_timing.txt', access='sequential', position='append')
 			write(9834, '(a, g, a, /)') 'The calculation of transmission functions for the absorptive model took ', delta, 'seconds.'
 			close(9834)
         endif    
@@ -895,7 +898,7 @@ module m_potential
 		integer(4), allocatable :: handled(:,:)
 		integer(4):: save_list(2,nt),match_count, i, j, m, n,ii,jj,jjj,kk,iii
         real(fp_kind) :: tau_holder(3),tau_holder2(3),ccd_slice,ums,amplitude(nopiy,nopix),phase(nopiy,nopix)
-        real(fp_kind) :: mod_tau(3,nt,maxnat_slice,n_slices,n_qep_grates),t1, delta
+        real(fp_kind) :: mod_tau(3,nt,maxnat_slice,n_slices,n_qep_grates),t1, t2, delta
         logical::fracocc
     
         procedure(make_site_factor_generic),pointer :: make_site_factor
@@ -904,7 +907,8 @@ module m_potential
  	 	!	Search for fractional occupancy
          fracocc = any(atf(2,:).lt.0.99d0)
         
-        t1 = secnds(0.0_fp_kind)
+        !t1 = secnds(0.0_fp_kind)
+		call cpu_time(t1)
 
         do j = 1, n_slices
 	        write(*,'(1x, a, a, a, a, a)') 'Calculating transmission functions for slice ', to_string(j), '/', to_string(n_slices), '...'
@@ -978,13 +982,15 @@ module m_potential
         
 	    enddo ! End loop over slices
 	
-	    delta = secnds(t1)
+	    !delta = secnds(t1)
+        call cpu_time(t2)
+        delta = t2 - t1
         
         write(*,*) 'The calculation of transmission functions for the QEP model took ', delta, 'seconds.'
         write(*,*)
 
     	if(timing) then
-			open(unit=9834, file=trim(adjustl(output_prefix))//'_timing.txt', access='append')
+			open(unit=9834, file=trim(adjustl(output_prefix))//'_timing.txt', access='sequential', position='append')
 			write(9834, '(a, g, a, /)') 'The calculation of transmission functions for the QEP model took ', delta, 'seconds.'
 			close(9834)
         endif    

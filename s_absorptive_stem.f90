@@ -92,7 +92,7 @@ subroutine absorptive_stem(STEM,ionization,PACBED)
 	real(8)::thmin,thmax
 
     !diagnostic variables
-    real(fp_kind) :: intens, t1, delta
+    real(fp_kind) :: intens, t1, t2, delta
     
     !output variables
     character(120) :: filename,fnam,fnam_det
@@ -246,7 +246,8 @@ subroutine absorptive_stem(STEM,ionization,PACBED)
 #endif
 
     call command_line_title_box('Calculation running')
-    t1 = secnds(0.0)
+    !t1 = secnds(0.0)
+    call cpu_time(t1)
     
     intens = 1.0_fp_kind
 
@@ -460,7 +461,9 @@ subroutine absorptive_stem(STEM,ionization,PACBED)
     enddo                                                                         !end loop over probe position ny
     enddo                                                                         !end loop over probe position nx
     
-    delta = secnds(t1)
+    !delta = secnds(t1)
+    call cpu_time(t2)
+    delta = t2 - t1
     
     write(*,*)
     write(*,*) 'Calculation is finished.'
@@ -469,7 +472,7 @@ subroutine absorptive_stem(STEM,ionization,PACBED)
     write(*,*)  
     
 	if(timing) then
-		open(unit=9834, file=trim(adjustl(output_prefix))//'_timing.txt', access='append')
+		open(unit=9834, file=trim(adjustl(output_prefix))//'_timing.txt', access='sequential', position='append')
 		write(9834, '(a, g, a, /)') 'The multislice calculation took ', delta, 'seconds.'
 		close(9834)
 	endif

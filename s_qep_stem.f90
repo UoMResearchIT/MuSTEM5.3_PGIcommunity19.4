@@ -108,7 +108,7 @@ subroutine qep_stem(STEM,ionization,PACBED)
     
     !diagnostic variables
     real(fp_kind) :: intensity
-    real(fp_kind) :: t1, delta
+    real(fp_kind) :: t1, t2, delta
     
     !output variables
     character(120) :: fnam, fnam_temp, fnam_det
@@ -187,7 +187,8 @@ subroutine qep_stem(STEM,ionization,PACBED)
 	endif
 	
     
-	t1 = secnds(0.0)    
+	!t1 = secnds(0.0)    
+	call cpu_time(t1)
 	
     call command_line_title_box('Calculation running')
 	
@@ -508,7 +509,9 @@ subroutine qep_stem(STEM,ionization,PACBED)
         stem_elastic_image = stem_elastic_image/float(n_qep_passes*n_qep_passes)
     endif
 
-    delta = secnds(t1)
+    !delta = secnds(t1)
+    call cpu_time(t2)
+    delta = t2 - t1
     
     write(*,*) 
     write(*,*) 
@@ -519,7 +522,7 @@ subroutine qep_stem(STEM,ionization,PACBED)
     write(*,*)    
     
 	if(timing) then
-		open(unit=9834, file=trim(adjustl(output_prefix))//'_timing.txt', access='append')
+		open(unit=9834, file=trim(adjustl(output_prefix))//'_timing.txt', access='sequential', position='append')
 		write(9834, '(a, g, a, /)') 'The multislice calculation took ', delta, 'seconds.'
 		close(9834)
     endif
