@@ -26,6 +26,8 @@ PROC=cpu
 PREC=double
 #(lin/win)
 OS=lin
+#compiler (pgi/intel/gnu) - NOTE: only pgi will work with GPU, and intel/gnu not tested on win
+COMPILER=intel
 #FFTW3 location 
 FFTW3DIR=/opt/fftw3.3.8_pgi
 ifeq ($(OS),win)
@@ -91,6 +93,28 @@ endif
 
 BINARY=mustem_$(EXE1)_$(EXE2).$(EXE3)
 
+
+#Compiler
+ifeq ($(COMPILER),pgi)
+	EXEC=pgf90
+	COMPILER_FLAGS=$(STATIC) -c -tp=sandybridge,haswell -traceback -g -O3 -Mpreprocess -Mbackslash -Mextend -Mfree -Mrecursive -Mbounds -Mchkptr -Mchkstk  $(FFTW3_FLAGS) -D$(PRECISION) $(GPU_FLAGS) $(OS_FLAG) $(DBG)
+	OPENMP_FLAGS=-mp
+else ifeq ($(COMPILER),intel)
+	EXEC=ifort
+	OPENMP_FLAGS=-qopenmp
+	COMPILER_FLAGS=$(STATIC) -c -recursive -O2 -fpp -extend-source -free -WB  $(FFTW3_FLAGS) -D$(PRECISION) $(GPU_FLAGS) $(OS_FLAG) $(DBG) $(OPENMP_FLAGS)
+	#COMPILER_FLAGS=$(STATIC) -c -recursive -traceback -g -O0 -fpp -extend-source -free -WB  $(FFTW3_FLAGS) -D$(PRECISION) $(GPU_FLAGS) $(OS_FLAG) $(DBG)
+else ifeq ($(COMPILER),cray)
+	EXEC=ftn
+	#COMPILER_FLAGS=$(STATIC) -c -recursive -traceback -g -O2 -fpp -extend-source -free -WB  $(FFTW3_FLAGS) -D$(PRECISION) $(GPU_FLAGS) $(OS_FLAG) $(DBG)
+	#COMPILER_FLAGS=$(STATIC) -c -recursive -traceback -g -O0 -fpp -extend-source -free -WB  $(FFTW3_FLAGS) -D$(PRECISION) $(GPU_FLAGS) $(OS_FLAG) $(DBG)
+	COMPILER_FLAGS=$(STATIC) -c -h pl=mustem_cpu_dble.out.pl -N 1023 -eZ $(FFTW3_FLAGS) -D$(PRECISION) $(GPU_FLAGS) $(OS_FLAG) $(DBG)
+	OPENMP_FLAGS=-h omp
+else
+	EXEC=balls
+endif
+
+
 ###########################################################
 #dynamic linking is default for PGI on linux, and static linking is default for PGI on windows!
 #for windows -Bstatic has to be used for compiling and linking!
@@ -110,67 +134,66 @@ BINARY=mustem_$(EXE1)_$(EXE2).$(EXE3)
 #-#:		show invocations of compiler, assembler and linker during Makefile run
 ###########################################################
 
-PGF_FLAGS=$(STATIC) -c -g -O3 -Mpreprocess -Mbackslash -Mconcur -Mextend -Mfree -Mrecursive -mp  $(FFTW3_FLAGS) -D$(PRECISION) $(GPU_FLAGS) $(OS_FLAG) $(DBG)
 
 executable: intermediate
-	pgf90 -o $(BINARY) *.$(OBJ) $(STATIC) -mp $(FFTW3_FLAGS) $(GPU_FLAGS) $(OS_FLAG)  $(DBG) 
+	$(EXEC) -o $(BINARY) *.$(OBJ) $(STATIC) $(OPENMP_FLAGS) $(FFTW3_FLAGS) $(GPU_FLAGS) $(OS_FLAG)  $(DBG) 
 
 modules:
 ifeq ($(PROC),gpu)
 #GPU
-	pgf90 $(PGF_FLAGS) quadpack.f90
-	pgf90 $(PGF_FLAGS) m_precision.f90
-	pgf90 $(PGF_FLAGS) m_string.f90
-	pgf90 $(PGF_FLAGS) m_numerical_tools.f90
-	pgf90 $(PGF_FLAGS) mod_global_variables.f90
-	pgf90 $(PGF_FLAGS) m_crystallography.f90
-	pgf90 $(PGF_FLAGS) m_electron.f90
-	pgf90 $(PGF_FLAGS) m_user_input.f90
-	pgf90 $(PGF_FLAGS) GPU_routines/mod_cufft.f90
-	pgf90 $(PGF_FLAGS) mod_CUFFT_wrapper.f90
-	pgf90 $(PGF_FLAGS) mod_output.f90
-	pgf90 $(PGF_FLAGS) m_multislice.f90
-	pgf90 $(PGF_FLAGS) m_lens.f90
-	pgf90 $(PGF_FLAGS) m_tilt.f90
-	pgf90 $(PGF_FLAGS) m_absorption.f90
-	pgf90 $(PGF_FLAGS) GPU_routines/mod_cuda_array_library.f90
-	pgf90 $(PGF_FLAGS) GPU_routines/mod_cuda_potential.f90
-	pgf90 $(PGF_FLAGS) m_potential.f90
-	pgf90 $(PGF_FLAGS) MS_utilities.f90
-	pgf90 $(PGF_FLAGS) GPU_routines/mod_cuda_setup.f90
-	pgf90 $(PGF_FLAGS) GPU_routines/mod_cuda_ms.f90
-	pgf90 $(PGF_FLAGS) s_absorptive_stem.f90
-	pgf90 $(PGF_FLAGS) s_qep_tem.f90
-	pgf90 $(PGF_FLAGS) s_qep_stem.f90
-	pgf90 $(PGF_FLAGS) s_absorptive_tem.f90
-	pgf90 $(PGF_FLAGS) muSTEM.f90
+	$(EXEC) $(COMPILER_FLAGS) quadpack.f90
+	$(EXEC) $(COMPILER_FLAGS) m_precision.f90
+	$(EXEC) $(COMPILER_FLAGS) m_string.f90
+	$(EXEC) $(COMPILER_FLAGS) m_numerical_tools.f90
+	$(EXEC) $(COMPILER_FLAGS) mod_global_variables.f90
+	$(EXEC) $(COMPILER_FLAGS) m_crystallography.f90
+	$(EXEC) $(COMPILER_FLAGS) m_electron.f90
+	$(EXEC) $(COMPILER_FLAGS) m_user_input.f90
+	$(EXEC) $(COMPILER_FLAGS) GPU_routines/mod_cufft.f90
+	$(EXEC) $(COMPILER_FLAGS) mod_CUFFT_wrapper.f90
+	$(EXEC) $(COMPILER_FLAGS) mod_output.f90
+	$(EXEC) $(COMPILER_FLAGS) m_multislice.f90
+	$(EXEC) $(COMPILER_FLAGS) m_lens.f90
+	$(EXEC) $(COMPILER_FLAGS) m_tilt.f90
+	$(EXEC) $(COMPILER_FLAGS) m_absorption.f90
+	$(EXEC) $(COMPILER_FLAGS) GPU_routines/mod_cuda_array_library.f90
+	$(EXEC) $(COMPILER_FLAGS) GPU_routines/mod_cuda_potential.f90
+	$(EXEC) $(COMPILER_FLAGS) m_potential.f90
+	$(EXEC) $(COMPILER_FLAGS) MS_utilities.f90
+	$(EXEC) $(COMPILER_FLAGS) GPU_routines/mod_cuda_setup.f90
+	$(EXEC) $(COMPILER_FLAGS) GPU_routines/mod_cuda_ms.f90
+	$(EXEC) $(COMPILER_FLAGS) s_absorptive_stem.f90
+	$(EXEC) $(COMPILER_FLAGS) s_qep_tem.f90
+	$(EXEC) $(COMPILER_FLAGS) s_qep_stem.f90
+	$(EXEC) $(COMPILER_FLAGS) s_absorptive_tem.f90
+	$(EXEC) $(COMPILER_FLAGS) muSTEM.f90
 else
 #CPU
-	pgf90 $(PGF_FLAGS) quadpack.f90
-	pgf90 $(PGF_FLAGS) mod_CUFFT_wrapper.f90
-	pgf90 $(PGF_FLAGS) m_precision.f90
-	pgf90 $(PGF_FLAGS) m_string.f90
-	pgf90 $(PGF_FLAGS) m_numerical_tools.f90
-	pgf90 $(PGF_FLAGS) mod_global_variables.f90
-	pgf90 $(PGF_FLAGS) m_crystallography.f90
-	pgf90 $(PGF_FLAGS) m_electron.f90
-	pgf90 $(PGF_FLAGS) m_user_input.f90
-	pgf90 $(PGF_FLAGS) mod_output.f90
-	pgf90 $(PGF_FLAGS) m_multislice.f90
-	pgf90 $(PGF_FLAGS) m_lens.f90
-	pgf90 $(PGF_FLAGS) m_tilt.f90
-	pgf90 $(PGF_FLAGS) m_absorption.f90
-	pgf90 $(PGF_FLAGS) m_potential.f90
-	pgf90 $(PGF_FLAGS) MS_utilities.f90
-	pgf90 $(PGF_FLAGS) s_absorptive_stem.f90
-	pgf90 $(PGF_FLAGS) s_qep_tem.f90
-	pgf90 $(PGF_FLAGS) s_qep_stem.f90
-	pgf90 $(PGF_FLAGS) s_absorptive_tem.f90
-	pgf90 $(PGF_FLAGS) muSTEM.f90
+	$(EXEC) $(COMPILER_FLAGS) quadpack.f90
+	$(EXEC) $(COMPILER_FLAGS) mod_CUFFT_wrapper.f90
+	$(EXEC) $(COMPILER_FLAGS) m_precision.f90
+	$(EXEC) $(COMPILER_FLAGS) m_string.f90
+	$(EXEC) $(COMPILER_FLAGS) m_numerical_tools.f90
+	$(EXEC) $(COMPILER_FLAGS) mod_global_variables.f90
+	$(EXEC) $(COMPILER_FLAGS) m_crystallography.f90
+	$(EXEC) $(COMPILER_FLAGS) m_electron.f90
+	$(EXEC) $(COMPILER_FLAGS) m_user_input.f90
+	$(EXEC) $(COMPILER_FLAGS) mod_output.f90
+	$(EXEC) $(COMPILER_FLAGS) m_multislice.f90
+	$(EXEC) $(COMPILER_FLAGS) m_lens.f90
+	$(EXEC) $(COMPILER_FLAGS) m_tilt.f90
+	$(EXEC) $(COMPILER_FLAGS) m_absorption.f90
+	$(EXEC) $(COMPILER_FLAGS) m_potential.f90
+	$(EXEC) $(COMPILER_FLAGS) MS_utilities.f90
+	$(EXEC) $(COMPILER_FLAGS) s_absorptive_stem.f90
+	$(EXEC) $(COMPILER_FLAGS) s_qep_tem.f90
+	$(EXEC) $(COMPILER_FLAGS) s_qep_stem.f90
+	$(EXEC) $(COMPILER_FLAGS) s_absorptive_tem.f90
+	$(EXEC) $(COMPILER_FLAGS) muSTEM.f90
 endif
 
 intermediate: *.f90 modules
-	pgf90 $(PGF_FLAGS) *.f90
+	$(EXEC) $(COMPILER_FLAGS) *.f90
 
 clean:
 	rm -f *.$(OBJ) *.mod *.tmp *.TMP *.out *.$(EXE3) *.dwf
