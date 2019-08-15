@@ -340,7 +340,7 @@
         integer*4 :: num_threads
         integer*4 :: omp_get_max_threads, omp_get_num_procs
     
-        num_threads = omp_get_num_procs() 
+        num_threads = omp_get_max_threads() 
         
         call omp_set_num_threads(num_threads)
         
