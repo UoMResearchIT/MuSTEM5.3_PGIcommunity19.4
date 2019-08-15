@@ -73,12 +73,20 @@
       real(fp_kind) uvwm1,uvwm2,gg(3),rzone(3)
               
       integer(4) izone1(3),i,j,jm,icount,itrue,zindex,k
+      
+      integer :: my_iostat
+
+      character (256) :: my_iomsg 
 
       iunit = 15
 100   write(6,101)
 101   format(1x, 'Please enter the name of the input .xtl file.')
       call get_input("Input crystal file name", xtl_fnam)
-      open(unit=iunit,file=xtl_fnam,status='old',err=998)
+      open(unit=iunit,file=trim(adjustl(xtl_fnam)),status='old',iostat=my_iostat, iomsg=my_iomsg)
+      if(my_iostat /= 0) then
+      	write(*,*) 'Open ',trim(adjustl(xtl_fnam)),' failed with iostat = ', my_iostat, ' iomsg = '//trim(my_iomsg)
+      	goto 100
+      end if
       
       !First check if accelerating voltage is in xtl file
       do i=1,4
