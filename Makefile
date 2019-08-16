@@ -27,9 +27,10 @@ PREC=double
 #(lin/win)
 OS=lin
 #compiler (pgi/intel/gnu) - NOTE: only pgi will work with GPU, and intel/gnu not tested on win
-COMPILER=intel
+COMPILER=cray
 #FFTW3 location 
-FFTW3DIR=/opt/fftw3.3.8_pgi
+#FFTW3DIR=/opt/fftw3.3.8_pgi
+FFTW3DIR=/opt/cray/fftw/3.3.6.1/ivybridge
 ifeq ($(OS),win)
 	FFTW3DIR="C:\Program Files\PGI\win64\2019\fftw3.3.5"
 	#cuFFT location (only for Windows)
@@ -106,9 +107,8 @@ else ifeq ($(COMPILER),intel)
 	#COMPILER_FLAGS=$(STATIC) -c -recursive -traceback -g -O0 -fpp -extend-source -free -WB  $(FFTW3_FLAGS) -D$(PRECISION) $(GPU_FLAGS) $(OS_FLAG) $(DBG)
 else ifeq ($(COMPILER),cray)
 	EXEC=ftn
-	#COMPILER_FLAGS=$(STATIC) -c -recursive -traceback -g -O2 -fpp -extend-source -free -WB  $(FFTW3_FLAGS) -D$(PRECISION) $(GPU_FLAGS) $(OS_FLAG) $(DBG)
-	#COMPILER_FLAGS=$(STATIC) -c -recursive -traceback -g -O0 -fpp -extend-source -free -WB  $(FFTW3_FLAGS) -D$(PRECISION) $(GPU_FLAGS) $(OS_FLAG) $(DBG)
-	COMPILER_FLAGS=$(STATIC) -c -h pl=mustem_cpu_dble.out.pl -N 1023 -eZ $(FFTW3_FLAGS) -D$(PRECISION) $(GPU_FLAGS) $(OS_FLAG) $(DBG)
+	COMPILER_FLAGS=$(STATIC) -O 3 -e o -c -h pl=mustem_cpu_dble.out.pl -N 1023 -eZ $(FFTW3_FLAGS) -D$(PRECISION) $(GPU_FLAGS) $(OS_FLAG) $(DBG)
+	#COMPILER_FLAGS=$(STATIC) -O 3 -e o -c -h pl=mustem_cpu_dble.out.pl -N 1023 -eZ $(FFTW3_FLAGS) -D$(PRECISION) $(GPU_FLAGS) $(OS_FLAG) $(DBG)
 	OPENMP_FLAGS=-h omp
 else
 	EXEC=balls
