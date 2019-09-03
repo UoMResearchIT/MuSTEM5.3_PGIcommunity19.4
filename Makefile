@@ -26,11 +26,11 @@ PROC=cpu
 PREC=double
 #(lin/win)
 OS=lin
-#compiler (pgi/intel/gnu) - NOTE: only pgi will work with GPU, and intel/gnu not tested on win
-COMPILER=cray
+#compiler (pgi/intel/cray) - NOTE: only pgi will work with GPU, and intel/cray not tested on win
+COMPILER=pgi
 #FFTW3 location 
 #FFTW3DIR=/opt/fftw3.3.8_pgi
-FFTW3DIR=/opt/cray/fftw/3.3.6.1/ivybridge
+FFTW3DIR=${FFTW_HOME}
 ifeq ($(OS),win)
 	FFTW3DIR="C:\Program Files\PGI\win64\2019\fftw3.3.5"
 	#cuFFT location (only for Windows)
@@ -43,6 +43,7 @@ endif
 #Correctly installed compiler environment should find this by itself:
 #CUDA_PATH="C:\Program Files\PGI\win64\2019\cuda\10.1"
 #LINKER_FLAGS= -pgf90libs -lpgf90rtl
+
 
 #CPU: FFTW3 libraries
 GPU_FLAGS=
